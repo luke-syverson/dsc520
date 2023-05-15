@@ -1,6 +1,6 @@
 # Assignment: ASSIGNMENT 3
-# Name: Lastname, Firstname
-# Date: 2010-02-14
+# Name: Syverson, Luke
+# Date: 2023-04-02
 
 ## Load the ggplot2 package
 library(ggplot2)
@@ -15,7 +15,7 @@ heights_df <- read.csv("data/r4ds/heights.csv")
 # https://ggplot2.tidyverse.org/reference/geom_point.html
 ## Using `geom_point()` create three scatterplots for
 ## `height` vs. `earn`
-x <- heights_df
+x <- heights_df # After completing this assignment, I realize I shouldn't use 'x' as a table name shorthand.
 ggplot(x, aes(x=height, y=earn)) + geom_point(colour = "red", size = 1)
 ## `age` vs. `earn`
 ggplot(x, aes(x=age, y=earn)) + geom_point(colour = "blue", size = 1)
@@ -38,16 +38,16 @@ ggplot(x, aes(x=height, y=earn, col=sex)) + geom_point()
 ## Title: Height vs. Earnings
 ## X label: Height (Inches)
 ## Y Label: Earnings (Dollars)
-ggplot(___, aes(x=___, y=___, col=___)) + ___ + ___ + ___ + ___
+ggplot(x, aes(x=height, y=earn, col=sex)) + geom_point() + xlab("Height") + ylab("Earnings") + ggtitle("Height vs. Earnings")
 
 # https://ggplot2.tidyverse.org/reference/geom_histogram.html
 ## Create a histogram of the `earn` variable using `geom_histogram()`
-ggplot(___, aes(___)) + ___
+ggplot(x, aes(earn)) + geom_histogram()
 
 ## Create a histogram of the `earn` variable using `geom_histogram()`
 ## Use 10 bins
-ggplot(___ aes(___)) + ___
+ggplot(x, aes(earn)) + geom_histogram(bins = 10)
 
 # https://ggplot2.tidyverse.org/reference/geom_density.html
 ## Create a kernel density plot of `earn` using `geom_density()`
-ggplot(___, aes(___)) +  ___
+ggplot(x, aes(earn)) +  geom_density()
