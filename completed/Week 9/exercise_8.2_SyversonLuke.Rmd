@@ -14,6 +14,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### If you worked with the Housing dataset in previous week – you are in luck, you likely have already found any issues in the dataset and made the necessary transformations. If not, you will want to take some time looking at the data with all your new skills and identifying if you have any clean up that needs to happen.
 
+---
+
 ###Complete the following:
 
 #### Explain any transformations or modifications you made to the dataset
@@ -40,6 +42,8 @@ df <- housing %>% select(-'sale_warning', -'year_renovated', -'ctyname', -'prop_
 colnames(df) <- gsub(" ", "_", colnames(df))
 ```
 
+---
+
 #### Create two variables; one that will contain the variables Sale Price and Square Foot of Lot (same variables used from previous assignment on simple regression) and one that will contain Sale Price and several additional predictors of your choice. Explain the basis for your additional predictor selections.
 ```{r subsets}
 price_lot <- df %>% select(Sale_Price, sq_ft_lot)
@@ -51,7 +55,7 @@ sale_model <- lm(Sale_Price ~ year_built + bedrooms + sq_ft_lot + building_grade
 Living space, property usage/zoning & all geographic qualifiers except for zip5 are excluded per assumed multicollinearity with total lot size, sitetype and geography.
 Sale date is excluded per the granularity, despite potential to quantify potential seasonality. Future analysis might aggregate the dates to the month level to increase generalization potential.
 Bathrooms are excluded per the complexity of relationships between each possible combination. A weighed total of each type might be suited for future analysis.
-
+---
 #### Execute a summary() function on two variables defined in the previous step to compare the model results. What are the R2 and Adjusted R2 statistics? Explain what these results tell you about the overall model. Did the inclusion of the additional predictors help explain any large variations found in Sale Price?
 ```{r model_summary}
 summary(pl_model)
@@ -61,36 +65,102 @@ summary(sale_model)
 The low R-statistics indicate little predictability of Sale Price given lot size.
 ##### sale_model Multiple R-squared:  0.1891,	Adjusted R-squared:  0.1885
 The additional predictors fared slightly better, but lacked substantial improvement.
+
+---
+
 #### Considering the parameters of the multiple regression model you have created. What are the standardized betas for each parameter and what do the values indicate?
 ```{r stand_betas}
 library("lm.beta")
 lm.beta(sale_model)
 ```
 It appears that building grade has the largest influences on the standard deviation of Sale Price, with building site types, year built, bedrooms and lot size following in descending order of magnitude. Building grade is the best predictor by far.
+
+---
+
 #### Calculate the confidence intervals for the parameters in your model and explain what the results indicate.
 ```{r CI}
 confint(sale_model)
 ```
 Most variables could be significant, and the range of the intervals other than site types and bedrooms ar fairly small. Site type seems to be confounding the significance of the model.
+
+---
+
 #### Assess the improvement of the new model compared to your original model (simple regression model) by testing whether this change is significant by performing an analysis of variance.
 ```{r ANOVA}
 anova(pl_model, sale_model)
 ```
 The p-value indicates a significant improvement from the original model.
+
+---
+
 #### Perform casewise diagnostics to identify outliers and/or influential cases, storing each function's output in a dataframe assigned to a unique variable name.
-```{r casewise}
-cwise <- data.frame(
-  residuals = residuals(sale_model),
-  hat_values = hatvalues(sale_model),
-  cooks_distance = cooks.distance(sale_model)
-)
-cwise
+```{r casewise_config}
+library(broom)
+cwise <- augment(sale_model) %>% select(everything(), .fitted, .std.resid, .cooksd, .hat)
 ```
+
+---
+
 #### Calculate the standardized residuals using the appropriate command, specifying those that are +-2, storing the results of large residuals in a variable you create.
 #### Use the appropriate function to show the sum of large residuals.
+```{r residuals}
+cwise$large.residual <- abs(cwise$.std.resid) > 2
+sum(cwise$large.residual, na.rm = TRUE)
+```
+
+---
+
 #### Which specific variables have large residuals (only cases that evaluate as TRUE)?
+```{r true}
+cwise_lr <- subset(cwise, cwise$large.residual == TRUE)
+names(cwise_lr)
+```
+All the variables contain large residuals, but none contain exclusively TRUE values. It's possible that I'm misunderstanding the prompt here.
+
+---
+
 #### Investigate further by calculating the leverage, cooks distance, and covariance rations. Comment on all cases that are problematics.
+```{r cwise_further}
+cwise$large.cd <- cwise$.cooksd > 1
+sum(cwise$large.cd, na.rm = TRUE)
+
+cwise$large.lev <- cwise$.hat > 2*(mean(cwise$.hat))
+sum(cwise$large.lev)
+```
+No records have a Cook's Distance > 1, which implies stability; however, 577 records have high leverage, indicating possible outliers with exaggerated influence on the model.
+
+I wasn't able to get a covariance matrix per a non-logical/numeric error that I failed to resolve.
+
+---
+
 #### Perform the necessary calculations to assess the assumption of independence and state if the condition is met or not.
+```{r independence}
+library(car)
+dwt(sale_model)
+```
+It appears there is certainly autocorrelation within this model (p-value of 0), which I presume is within bedrooms, lot size and building grade.
+
+---
+
 #### Perform the necessary calculations to assess the assumption of no multicollinearity and state if the condition is met or not.
+```{r multicollinearity}
+cor.test(x = predict_sale$Sale_Price, y = predict_sale$sq_ft_lot, method = 'spearman')
+```
+I'm not entirely certain of how to assess the entire dataframe with cor.test, but regardless, it appears Sale Price and lot size are substantially correlated.
+
+---
+
 #### Visually check the assumptions related to the residuals using the plot() and hist() functions. Summarize what each graph is informing you of and if any anomalies are present.
+```{r assumptions_visual}
+hist(cwise$.resid)
+plot(cwise$.resid)
+```
+The residual histogram implies right-skewedness and very large outliers.The plot also implicates right-skewedness and outliers. Heteroskedasticity is present as well. The relationship is otherwise linear.
+
+---
+
 #### Overall, is this regression model unbiased? If an unbiased regression model, what does this tell us about the sample vs. the entire population model?
+
+The model is a poor generalization of the population due to the presence of outliers, skewedness & heteroskedasticity. This indicates that many extreme exceptions to the normal housing market behavior are present within the sample dataset, indicating large variance within the population or possible selection bias.
+
+If the model were unbiased, it would implicate a slight right-skewedness across a normal, leptokurtic distribution.
