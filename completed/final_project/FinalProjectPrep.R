@@ -19,7 +19,7 @@ json_library <- read_json('~/GitHub/dsc520/completed/final_project/MyData/YourLi
 json_history0 <- read_json('~/GitHub/dsc520/completed/final_project/MyData/StreamingHistory0.json')
 json_history1 <- read_json('~/GitHub/dsc520/completed/final_project/MyData/StreamingHistory1.json')
 
-# playlists <- parse_json(json_playlists, .na = json_na_error(), .null = NULL, simplifyVector = FALSE)
+playlists <- parse_json(json_playlists, .na = json_na_error(), .null = NULL, flatten = TRUE)
 # json_library <- parse_json(json_library)
 # history0 <- parse_json(json_history0)
 # history1 <- parse_json(json_history1)
